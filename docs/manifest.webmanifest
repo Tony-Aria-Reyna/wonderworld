@@ -1,0 +1,30 @@
+{
+  "name": "WonderWorld",
+  "short_name": "WonderWorld",
+  "description": "Travel the world, solve puzzles, do real science, learn Japanese and program a robot.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#BDEBF2",
+  "theme_color": "#19A7B8",
+  "lang": "en-NZ",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

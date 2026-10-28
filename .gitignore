@@ -1,0 +1,10 @@
+node_modules/
+dist/
+out/
+shots/
+__pycache__/
+*.pyc
+# home-use recordings (such as the Te Aka dictionary clips) are never published; put recordings you own in voices-public/
+voices/
+Get te reo voices.cmd
+_proj/
