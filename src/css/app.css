@@ -2072,3 +2072,20 @@ button.cd-cell{cursor:pointer}button.cd-cell:active{background:#E2EAFB}
 .nm-row{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:.3rem 0}.nm-in{font:600 1.1rem Fredoka,sans-serif;padding:.4rem .6rem;border-radius:.6rem;border:1px solid var(--line);min-width:12rem}
 /* iPhone and Android with a notch or a home bar: keep everything inside the safe area (viewport-fit=cover) */
 #app{inset:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+/* Code Lab: dragging blocks, tapping gaps, the repeat's number picker (29 October) */
+.cd-prog{position:relative}
+.cd-b,.cd-rh,.cd-pb{touch-action:none;-webkit-user-select:none;user-select:none}
+.cd-re{width:1.25rem}
+.cd-b.dragging,.cd-rep.dragging{opacity:.3}
+.cd-rep.into{box-shadow:inset 0 0 0 .2rem #E5487A;background:#FBE7EF}
+.cd-drop{position:absolute;display:none;width:.35rem;border-radius:.2rem;background:#E5487A;box-shadow:0 0 0 .15rem #fff;pointer-events:none;z-index:3}
+.cd-ghost{position:fixed;z-index:3000;pointer-events:none;transform:translate(-50%,-60%) rotate(-4deg) scale(1.08);filter:drop-shadow(0 .4rem .4rem rgba(27,42,78,.35));display:flex;align-items:center}
+.cd-ghost .cd-bin{display:none;width:2rem;height:2rem;margin-left:.3rem}
+.cd-ghost.bin{opacity:.85}.cd-ghost.bin .cd-bin{display:block}.cd-ghost.bin>.cd-b,.cd-ghost.bin>.cd-rep{filter:grayscale(.7)}
+.cd-ghost .cd-more{font:700 .9rem Fredoka,sans-serif;color:#7A5CC9;padding:0 .3rem}
+.cd-pick{position:fixed;z-index:3000;background:#fff;border-radius:1rem;padding:.4rem .5rem .5rem;box-shadow:0 .4rem 1.2rem rgba(27,42,78,.3),inset 0 0 0 .14rem #7A5CC9;display:flex;flex-direction:column;align-items:center;gap:.3rem}
+.cd-pick small{font:600 .9rem Fredoka,sans-serif;color:#7A5CC9}
+.cd-pick-row{display:grid;grid-template-columns:repeat(4,max(2.6rem,42px));gap:.3rem}
+.cd-pk{height:max(2.6rem,42px);border:0;border-radius:.6rem;background:#EFEAFB;color:#5A3FB0;font:700 1.25rem Fredoka,sans-serif;cursor:pointer}
+.cd-pk.on{background:#7A5CC9;color:#fff}
+

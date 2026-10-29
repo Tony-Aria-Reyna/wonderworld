@@ -1,5 +1,5 @@
 /* WonderWorld's service worker (public build): keeps a copy of the game so it opens without the internet.
-   The page is fetched fresh when online (so a new version arrives) and from the copy when offline. 5c1bae15c9 changes with every build. */
+   The page is fetched fresh when online (so a new version arrives) and from the copy when offline. 35fa35f0ea changes with every build. */
 const CACHE = 'wonderworld-__VERSION__';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });

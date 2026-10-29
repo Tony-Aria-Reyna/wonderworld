@@ -1,6 +1,6 @@
 # The Code Lab (0763-code.js, 28 October): its four built stations played through at one screen size, with wrong programs and wrong picks on purpose.
 # Checks: the map's Code Lab button opens it (real click); every chip on the board can be tapped where it is drawn; a station still to come and a locked one stay shut;
-# a program built with real taps (three forwards; then a repeat with a forward inside, its count tapped up to 5) makes the robot do the job; every puzzle finishes and the
+# a program built with real taps (three forwards; then a repeat with a forward inside, 5 picked from its number picker) makes the robot do the job; every puzzle finishes and the
 # stations are passed; nothing is off the screen or too small to tap; the robot stays on its board; the gifts arrive and the shop's "Code Lab gifts" shelf shows them;
 # the passport's Code Lab button; the grown-ups note. Screenshots: shots/cl_<size>_NNN.png.   python3 tools/t_codelab.py [lap|ph|phL|sm|tabP]
 import asyncio, sys, json
@@ -70,7 +70,7 @@ async def main():
                 if st['cd'] == '3a' and '3a' not in real and st['phase'] == 'full':
                     real.add('3a')
                     await page.click('.cd-pb[data-t="R"]'); await page.wait_for_timeout(120); await page.click('.cd-pb[data-t="F"]'); await page.wait_for_timeout(120)
-                    for i in range(3): await page.click('.cd-n'); await page.wait_for_timeout(100)
+                    await page.click('.cd-n'); await page.wait_for_timeout(150); await page.click('.cd-pick .cd-pk[data-n="5"]'); await page.wait_for_timeout(120)   # the number picker (29 October)
                     txt = await page.evaluate('()=>[document.querySelector(".cd-n").textContent, document.querySelectorAll(".cd-body .cd-b").length]')
                     if txt != ['×5', 1]: bad.append('the repeat block did not build as tapped: ' + str(txt))
                     await page.click('.cd-go'); last = None; continue

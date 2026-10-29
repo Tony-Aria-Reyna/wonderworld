@@ -156,8 +156,14 @@ function cdBoard(b, o) {
   return B;
 }
 
-/* ---- the program: blocks tapped in, shown in order. The next block goes where the pink line is; tap a block to put the line after it,
-   tap a repeat to put it inside, tap the repeat's end to come out. The number on a repeat changes when tapped. ✕ takes off the chosen block ---- */
+/* ---- the program. Two ways to build it, and both always work:
+   DRAG (Tony, 29 October: "Ideally i want to be able to move the blocks around by clicking and dragging"): drag a block from the bottom row to where it should go;
+     drag a block already in the program to move it (a repeat moves with everything inside it), into a repeat, out of one, or after it; drag it off the program to take it off.
+     While dragging, a pink line shows where it will land, and a repeat it would go inside lights up.
+   TAP: a block from the bottom row goes in at the pink line. Tap any gap between blocks (or the space before or after a repeat) to move the line there;
+     tap a block to put the line after it, a repeat's head to go inside it, its end to come out after it.
+   The number on a repeat opens a row of numbers (2 to 9) to pick from, so a wrong number is fixed with one tap ("if I accidently click too many repeat cycles, i need to delete the cycle").
+   ✕ takes off the chosen block. Mouse and touch both work (pointer events; blocks have touch-action: none so a finger drags instead of scrolling) ---- */
 const CD_ICON = {
   F: '<svg viewBox="0 0 24 24"><path d="M12 3l7 8h-4.500v10h-5V11H5z" fill="currentColor"/></svg>',
   cw: '<svg viewBox="0 0 24 24"><path d="M12 4a8 8 0 1 0 8 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M12 0l5 4-5 4z" fill="currentColor"/></svg>',
@@ -165,29 +171,98 @@ const CD_ICON = {
 };
 const CD_WORD = { F: 'forward', cw: 'turn ↻', acw: 'turn ↺', R: 'repeat' }, CD_SAY = { F: 'forward', cw: 'turn clockwise', acw: 'turn anticlockwise', R: 'repeat' };
 function cdEditor(allowed, o) {
-  o = o || {}; let prog = [], cur = { list: prog, i: 0 }, sel = null, locked = !!o.locked; const els = new Map(), keep = new Set();   /* keep: blocks marked to stay marked (the dashed suspects) */
-  const strip = h('div', { class: 'cd-prog' + (locked ? ' ro' : '') }), count = h('span', { class: 'cd-count' });
+  o = o || {}; let prog = [], cur = { list: prog, i: 0 }, sel = null, locked = !!o.locked, justDragged = false, pick = null;
+  const els = new Map(), heads = new Map(), ends = new Map(), bodies = new Map(), keep = new Set();   /* keep: blocks marked to stay marked (the dashed suspects) */
+  const strip = h('div', { class: 'cd-prog' + (locked ? ' ro' : '') }), count = h('span', { class: 'cd-count' }), marker = h('i', { class: 'cd-drop' });
   const parentOf = (node, list = prog) => { for (let i = 0; i < list.length; i++) { if (list[i] === node) return { list, i }; if (list[i].t === 'R') { const r = parentOf(node, list[i].body); if (r) return r; } } return null; };
+  const inTree = l => l === prog || (function f(ls) { return ls.some(n => n.t === 'R' && (n.body === l || f(n.body))); })(prog);
+  const ownerOf = l => { let o2 = null; (function f(ls) { ls.forEach(n => { if (n.t === 'R') { if (n.body === l) o2 = n; f(n.body); } }); })(prog); return o2; };
+  const changed = () => { if (o.onChange) o.onChange(); };
   const caret = () => h('i', { class: 'cd-caret' });
+  const free = () => !locked && !o.onTap;
   const chip = n => {
     if (n.t !== 'R') { const b = h('button', { class: 'cd-b cd-' + n.t + (n === sel ? ' sel' : '') + (keep.has(n) ? ' suspect' : ''), 'aria-label': CD_SAY[n.t], html: CD_ICON[n.t] }); els.set(n, b);
-      b.addEventListener('click', () => { if (o.onTap) return o.onTap(n); if (locked) return; sfx.tap(); const p = parentOf(n); sel = n; cur = { list: p.list, i: p.i + 1 }; draw(); }); return b; }
-    const num = h('button', { class: 'cd-n', 'aria-label': 'Repeat ' + n.n + ' times' }, '×' + n.n), head = h('button', { class: 'cd-rh' + (n === sel ? ' sel' : ''), 'aria-label': 'Repeat' }, ic('repeat-button'));
+      b.addEventListener('click', () => { if (justDragged) return; if (o.onTap) return o.onTap(n); if (locked) return; sfx.tap(); const p = parentOf(n); sel = n; cur = { list: p.list, i: p.i + 1 }; draw(); });
+      b.addEventListener('pointerdown', e => startDrag(e, { node: n })); return b; }
+    const num = h('button', { class: 'cd-n', 'aria-label': 'Repeat ' + n.n + ' times. Tap to choose how many' }, '×' + n.n), head = h('button', { class: 'cd-rh' + (n === sel ? ' sel' : ''), 'aria-label': 'Repeat' }, ic('repeat-button'));
     const end = h('button', { class: 'cd-re', 'aria-label': 'After the repeat' }), body = h('span', { class: 'cd-body' });
-    const box = h('span', { class: 'cd-rep' + (n === sel ? ' sel' : '') }, head, num, body, end); els.set(n, box);
-    head.addEventListener('click', () => { if (o.onTap) return o.onTap(n); if (locked) return; sfx.tap(); sel = n; cur = { list: n.body, i: n.body.length }; draw(); });
-    num.addEventListener('click', () => { if (o.onTap) return o.onTap(n); if (locked) return; sfx.pop(); n.n = n.n >= 5 ? 2 : n.n + 1; sel = n; draw(); });
-    end.addEventListener('click', () => { if (o.onTap) return o.onTap(n); if (locked) return; sfx.tap(); const p = parentOf(n); sel = n; cur = { list: p.list, i: p.i + 1 }; draw(); });
+    const box = h('span', { class: 'cd-rep' + (n === sel ? ' sel' : '') }, head, num, body, end); els.set(n, box); heads.set(n, head); ends.set(n, end); bodies.set(n, body);
+    head.addEventListener('click', () => { if (justDragged) return; if (o.onTap) return o.onTap(n); if (locked) return; sfx.tap(); sel = n; cur = { list: n.body, i: n.body.length }; draw(); });
+    head.addEventListener('pointerdown', e => startDrag(e, { node: n }));
+    num.addEventListener('click', () => { if (justDragged) return; if (o.onTap) return o.onTap(n); if (locked) return; sfx.tap(); openPick(n, num); });
+    end.addEventListener('click', () => { if (justDragged) return; if (o.onTap) return o.onTap(n); if (locked) return; sfx.tap(); const p = parentOf(n); sel = n; cur = { list: p.list, i: p.i + 1 }; draw(); });
     list(n.body, body); return box; };
   const list = (l, into) => { if (!locked && cur.list === l && cur.i === 0) into.append(caret()); l.forEach((n, i) => { into.append(chip(n)); if (!locked && cur.list === l && cur.i === i + 1) into.append(caret()); }); };
-  function draw() { els.clear(); strip.innerHTML = ''; list(prog, strip); if (!prog.length) strip.append(h('span', { class: 'cd-empty' }, locked ? '' : 'Tap the blocks below')); count.textContent = cdCount(prog) + (o.max ? ' of ' + o.max : '') + ' blocks'; count.classList.toggle('over', !!o.max && cdCount(prog) > o.max); }
-  const add = t => { if (locked) return; if (cdCount(prog) >= 24) { sfx.soft(); return; } sfx.tap(); const n = t === 'R' ? { t: 'R', n: 2, body: [] } : { t }; cur.list.splice(cur.i, 0, n); sel = n; cur = t === 'R' ? { list: n.body, i: 0 } : { list: cur.list, i: cur.i + 1 }; draw(); if (o.onChange) o.onChange(); };
+  function draw() {
+    closePick(); if (!inTree(cur.list)) cur = { list: prog, i: prog.length };
+    els.clear(); heads.clear(); ends.clear(); bodies.clear(); strip.innerHTML = ''; list(prog, strip);
+    if (!prog.length) strip.append(h('span', { class: 'cd-empty' }, locked ? '' : 'Tap or drag the blocks below'));
+    count.textContent = cdCount(prog) + (o.max ? ' of ' + o.max : '') + ' blocks'; count.classList.toggle('over', !!o.max && cdCount(prog) > o.max); }
+  const add = t => { if (locked) return; if (cdCount(prog) >= 24) { sfx.soft(); return; } sfx.tap(); const n = t === 'R' ? { t: 'R', n: 2, body: [] } : { t }; cur.list.splice(cur.i, 0, n); sel = n; cur = t === 'R' ? { list: n.body, i: 0 } : { list: cur.list, i: cur.i + 1 }; draw(); changed(); };
   /* ✕ takes off the chosen block; with none chosen, the block just before the pink line, or the last one */
-  const inTree = l => l === prog || (function f(ls) { return ls.some(n => n.t === 'R' && (n.body === l || f(n.body))); })(prog);
   const del = () => { if (locked || !prog.length) return; sfx.tap(); let p = sel ? parentOf(sel) : null;
     if (!p) p = cur.i > 0 && inTree(cur.list) ? { list: cur.list, i: cur.i - 1 } : { list: prog, i: prog.length - 1 };
-    p.list.splice(p.i, 1); sel = null; cur = { list: p.list, i: p.i }; if (!inTree(cur.list)) cur = { list: prog, i: prog.length }; draw(); if (o.onChange) o.onChange(); };
-  const pal = h('div', { class: 'cd-pal' }, allowed.map(t => h('button', { class: 'cd-pb cd-' + t, 'data-t': t, 'aria-label': CD_SAY[t], onclick: () => add(t) }, t === 'R' ? ic('repeat-button') : h('span', { class: 'cd-pi', html: CD_ICON[t] }), h('small', null, CD_WORD[t]))));
+    p.list.splice(p.i, 1); sel = null; cur = { list: p.list, i: p.i }; if (!inTree(cur.list)) cur = { list: prog, i: prog.length }; draw(); changed(); };
+
+  /* every place a block can go: each gap in each list, as points on the screen. A gap between two blocks on different rows gets a point at both */
+  const gaps = exclude => { const out = [], pt = (el, side) => { const r = el.getBoundingClientRect(); return { x: side === 'l' ? r.left - 2 : r.right + 2, y: r.top + r.height / 2, h: r.height }; };
+    const startOf = n => n.t === 'R' ? heads.get(n) : els.get(n), endOf = n => n.t === 'R' ? ends.get(n) : els.get(n);
+    const walk = (l, cont) => {
+      if (!l.length) { const r = cont.getBoundingClientRect(); out.push({ list: l, i: 0, x: r.left + 8, y: r.top + r.height / 2, h: Math.max(30, r.height) }); }
+      for (let i = 0; i < l.length; i++) { out.push(Object.assign({ list: l, i }, pt(startOf(l[i]), 'l'))); if (i > 0) out.push(Object.assign({ list: l, i }, pt(endOf(l[i - 1]), 'r'))); }
+      if (l.length) out.push(Object.assign({ list: l, i: l.length }, pt(endOf(l[l.length - 1]), 'r')));
+      l.forEach(n => { if (n.t === 'R' && n !== exclude) walk(n.body, bodies.get(n)); }); };
+    walk(prog, strip); return out; };
+  const nearest = (x, y, exclude) => { let best = null, bd = 1e9; gaps(exclude).forEach(g => { const d = Math.abs(x - g.x) + 3 * Math.max(0, Math.abs(y - g.y) - g.h / 2); if (d < bd) { bd = d; best = g; } }); return best; };
+  /* tapping a gap (not a block) puts the pink line there */
+  strip.addEventListener('click', e => { if (justDragged || !free() || e.target.closest('button')) return; const g = nearest(e.clientX, e.clientY); if (!g) return; sfx.tap(); sel = null; cur = { list: g.list, i: g.i }; draw(); });
+
+  /* dragging. src: { node } a block in the program, or { t } a new block from the bottom row */
+  function startDrag(e, src) {
+    if (!free() || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    const sx = e.clientX, sy = e.clientY; let on = false, ghost = null, target = null, off = false, lit = null;
+    const light = n => { if (lit === n) return; if (lit && els.get(lit)) els.get(lit).classList.remove('into'); lit = n; if (n && els.get(n)) els.get(n).classList.add('into'); };
+    const move = ev => {
+      if (!on) { if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < 8) return; on = true; closePick(); ghost = ghostOf(src); document.body.append(ghost);
+        if (src.node && els.get(src.node)) els.get(src.node).classList.add('dragging'); strip.classList.add('dropping'); strip.append(marker); }
+      ev.preventDefault(); ghost.style.left = ev.clientX + 'px'; ghost.style.top = ev.clientY + 'px';
+      const r = strip.getBoundingClientRect(), pad = 28; off = ev.clientX < r.left - pad || ev.clientX > r.right + pad || ev.clientY < r.top - pad || ev.clientY > r.bottom + pad;
+      target = off ? null : nearest(ev.clientX, ev.clientY, src.node); ghost.classList.toggle('bin', off && !!src.node);
+      if (target) { marker.style.display = 'block'; marker.style.left = (target.x - r.left + strip.scrollLeft - 2) + 'px'; marker.style.top = (target.y - r.top + strip.scrollTop - Math.min(target.h, 46) / 2) + 'px'; marker.style.height = Math.min(target.h, 46) + 'px'; light(target.list === prog ? null : ownerOf(target.list)); }
+      else { marker.style.display = 'none'; light(null); } };
+    const end = (ev, cancel) => {
+      document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); document.removeEventListener('pointercancel', cancelled);
+      if (!on) return; justDragged = true; setTimeout(() => { justDragged = false; }, 0);
+      ghost.remove(); marker.remove(); strip.classList.remove('dropping'); light(null);
+      if (cancel) { draw(); return; }
+      if (src.node) { const p = parentOf(src.node);
+        if (off) { p.list.splice(p.i, 1); sel = null; cur = { list: p.list, i: p.i }; sfx.tap(); }   /* dropped off the program: taken off */
+        else if (target) { p.list.splice(p.i, 1); let i = target.i; if (target.list === p.list && p.i < i) i--; target.list.splice(i, 0, src.node); sel = src.node; cur = { list: target.list, i: i + 1 }; sfx.pop(); }
+      } else if (target) { if (cdCount(prog) >= 24) { sfx.soft(); draw(); return; }
+        const n = src.t === 'R' ? { t: 'R', n: 2, body: [] } : { t: src.t }; target.list.splice(target.i, 0, n); sel = n; cur = src.t === 'R' ? { list: n.body, i: 0 } : { list: target.list, i: target.i + 1 }; sfx.pop(); }
+      draw(); changed(); };
+    const up = ev => end(ev, false), cancelled = ev => end(ev, true);
+    document.addEventListener('pointermove', move, { passive: false }); document.addEventListener('pointerup', up); document.addEventListener('pointercancel', cancelled);
+  }
+  const ghostOf = src => { const t = src.node ? src.node.t : src.t;
+    return h('div', { class: 'cd-ghost' }, t === 'R' ? h('span', { class: 'cd-rep' }, h('span', { class: 'cd-rh' }, ic('repeat-button')), h('span', { class: 'cd-n' }, '×' + (src.node ? src.node.n : 2)), src.node && src.node.body.length ? h('span', { class: 'cd-more' }, '+' + cdCount(src.node.body)) : null)
+      : h('span', { class: 'cd-b cd-' + t, html: CD_ICON[t] }), ic('wastebasket', 'cd-bin')); };
+
+  /* the number picker of a repeat: 2 to 9, the current one marked */
+  function closePick() { if (pick) { pick.remove(); pick = null; document.removeEventListener('pointerdown', outsidePick, true); } }
+  function outsidePick(e) { if (pick && !pick.contains(e.target)) closePick(); }
+  function openPick(n, anchor) {
+    closePick(); const r = anchor.getBoundingClientRect();
+    pick = h('div', { class: 'cd-pick', role: 'dialog', 'aria-label': 'How many times?' }, h('small', null, 'How many times?'),
+      h('div', { class: 'cd-pick-row' }, [2, 3, 4, 5, 6, 7, 8, 9].map(k => h('button', { class: 'cd-pk' + (k === n.n ? ' on' : ''), 'data-n': k, 'aria-label': k + ' times', onclick: () => { n.n = k; sfx.pop(); sel = n; draw(); changed(); } }, String(k)))));
+    document.body.append(pick);
+    const pw = pick.offsetWidth, ph = pick.offsetHeight; let top = r.bottom + 6; if (top + ph > innerHeight - 6) top = Math.max(6, r.top - ph - 6);
+    pick.style.left = Math.max(6, Math.min(innerWidth - pw - 6, r.left + r.width / 2 - pw / 2)) + 'px'; pick.style.top = top + 'px';
+    setTimeout(() => { if (pick) document.addEventListener('pointerdown', outsidePick, true); }, 0);
+    const watch = setInterval(() => { if (!strip.isConnected || !pick) { clearInterval(watch); closePick(); } }, 400); }
+
+  const pal = h('div', { class: 'cd-pal' }, allowed.map(t => { const b = h('button', { class: 'cd-pb cd-' + t, 'data-t': t, 'aria-label': CD_SAY[t], onclick: () => { if (!justDragged) add(t); } }, t === 'R' ? ic('repeat-button') : h('span', { class: 'cd-pi', html: CD_ICON[t] }), h('small', null, CD_WORD[t]));
+    b.addEventListener('pointerdown', e => startDrag(e, { t })); return b; }));
   const E = {
     strip, pal, count, get prog() { return prog; },
     set(p) { prog = cdClone(p); keep.clear(); cur = { list: prog, i: prog.length }; sel = null; draw(); },
@@ -246,12 +321,12 @@ function cdBuild(ui, it, st) {
     ui.answer.append(box);
     const base = () => it.text + (it.max && phase !== 'free' ? '' : '');
     ui.prompt(base(), (it.say || it.text) + (it.k === 'fix' ? ' Press Go to test it first.' : ' Then press Go.'));
-    const hook = () => { W.cur = { type: 'act', cd: it.id, phase, auto: () => solve(), miss: () => wrong() }; };
+    const hook = () => { W.cur = { type: 'act', cd: it.id, phase, auto: () => solve(), miss: () => wrong(), prog: () => cdText(E.prog) }; };   /* prog: what is built, for the drag test */
     /* for the tests: put in a right program for this part, or a wrong one, and press Go */
     const solve = () => { if (running) return; if (phase === 'legs') E.set(cdLegProg(route, here, route[legs[leg]])); else E.set(cdParse(it.sol)); go(); };
     const wrong = () => { if (running) return; const p = cdParse(it.sol); p.pop(); E.set(p.length ? p : [{ t: 'cw' }]); go(); };
     async function go() {
-      if (running) return; if (!E.prog.length) { sfx.soft(); ui.prompt('Tap some blocks first. Then Go.', 'Tap some blocks to build the program first. Then press Go.'); return; }
+      if (running) return; if (!E.prog.length) { sfx.soft(); ui.prompt('Add some blocks first. Then Go.', 'Tap or drag some blocks to build the program first. Then press Go.'); return; }
       running = true; W.cur = null; E.lock(true); E.unmark();
       const limit = it.max && phase !== 'free' && phase !== 'legs';
       if (limit && cdCount(E.prog) > it.max) { await miss('long'); return; }
@@ -488,4 +563,4 @@ SCREENS.code = () => {
   const ui = makeUI(() => go('map'), ''); show(ui.root); ui.root.classList.add('c-cd');
   (async () => { try { await cdHome(ui); } catch (e) { if (e !== ABORT) { console.error(e); throw e; } } })();
 };
-W.code = { cdBuild, cdPredict, cdBug, cdShape, cdMeet, cdStation, CD_ST, CD_GIFTS, CD_BUILT, cdParse, cdCount, cdText, cdSim, cdWin, cdRoute, cdCorners, cdLegProg, cdState, cdShapeSvg };
+W.code = { cdEditor, cdBuild, cdPredict, cdBug, cdShape, cdMeet, cdStation, CD_ST, CD_GIFTS, CD_BUILT, cdParse, cdCount, cdText, cdSim, cdWin, cdRoute, cdCorners, cdLegProg, cdState, cdShapeSvg };
