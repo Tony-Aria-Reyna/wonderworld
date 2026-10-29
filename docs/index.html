@@ -6095,7 +6095,7 @@ SCREENS.about = from => {
         'World map: Natural Earth data (public domain), through world-atlas.',
         'Letters: Fredoka and Klee One (Fontworks), SIL Open Font Licence. Kana stroke order: KanjiVG by Ulrich Apel (CC BY-SA 3.0).',
         'Voices: the speech voices on each device. Te reo Māori words play only from a real recording, which a grown-up can make on the grown-ups page.',
-        'Source code: github.com/tonyandreynanz-max/wonderworld'])));
+        'Source code: github.com/Tony-Aria-Reyna/wonderworld'])));
   show(h('div', { class: 'screen about' }, h('div', { class: 'topbar act-top' }, h('button', { class: 'round', 'aria-label': 'Back', 'data-k': 'back', onclick: () => { sfx.tap(); go(back, back === 'welcome' ? 'again' : undefined); } }, ic(back === 'parent' ? 'gear' : 'left-arrow')), h('h2', null, 'About')), card));
   W.cur = { type: 'about', back: () => $('[data-k=back]').click() };
 };

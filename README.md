@@ -2,7 +2,7 @@
 
 A free learning game for children of about 6 to 11, made in Aotearoa New Zealand. Travel the world, solve puzzles, do real science, learn Japanese and program a robot.
 
-**Play it:** https://tonyandreynanz-max.github.io/wonderworld/
+**Play it:** https://tony-aria-reyna.github.io/wonderworld/
 
 It runs in any modern web browser on a laptop, tablet or phone. Once it has been opened, it keeps working without the internet.
 
