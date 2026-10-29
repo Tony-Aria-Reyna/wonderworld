@@ -209,15 +209,15 @@ for (const cid of CIDS) ctx.COUNTRIES[cid].missions.forEach(m => m.rounds.forEac
     if (st.words.length < 5) bad.push('JP station ' + n + ' needs at least five words');
     st.talk.forEach(t => { jt++; if (t.count) { if (!(t.count[0] >= 1 && t.count[1] <= 10 && flat[t.thing])) bad.push('JP count talk at station ' + n); return; }
       [t.ask, t.clue].forEach(x => { if (!x || words(x) > 12) bad.push('JP talk line needs 12 words or fewer: ' + x); });
-      [t.dog, t.me, t.after].concat(t.no || []).concat((t.opts || []).map(o => o[0])).filter(Boolean).forEach(x => { if (/undefined/.test(J.jpRom(x.replace('{name}', 'ありあ').replace('{kname}', 'アリア')))) bad.push('JP line has a letter with no sound: ' + x); });
+      [t.dog, t.me, t.after].concat(t.no || []).concat((t.opts || []).map(o => o[0])).filter(Boolean).forEach(x => { if (/undefined/.test(J.jpRom(x.replace('{name}', 'りこ').replace('{kname}', 'リコ')))) bad.push('JP line has a letter with no sound: ' + x); });
       if (!t.any && (!t.me || (t.no || []).includes(t.me) || (t.no || []).length < 2)) bad.push('JP talk at station ' + n + ' needs a right reply and two different wrong ones');
       if (t.any && !(t.opts && t.opts.length >= 2)) bad.push('JP talk at station ' + n + ' needs choices');
       [t.thing, t.want].filter(Boolean).forEach(p => { if (!flat[p]) bad.push('JP talk picture missing: ' + p); }); }); });
   // the race deck for every station: enough cards, and every card has three other choices with different pictures
   for (let n = 1; n <= ctx.JP_N; n++) { const d = J.jpDeck(n); if (d.cards.length < 12) bad.push('JP station ' + n + ' race has only ' + d.cards.length + ' cards'); cards += d.cards.length; }
-  if (J.jpRom('わたしは ありあ です。') !== 'watashiwa aria desu' || J.jpRom('きゃ') !== 'kya' || J.jpRom('がっこう') !== 'gakkou' || J.jpRom('ぎゅうにゅう') !== 'gyuunyuu') bad.push('JP romaji rules are wrong: ' + [J.jpRom('わたしは ありあ です。'), J.jpRom('きゃ'), J.jpRom('がっこう'), J.jpRom('ぎゅうにゅう')].join(' | '));
+  if (J.jpRom('わたしは けんた です。') !== 'watashiwa kenta desu' || J.jpRom('きゃ') !== 'kya' || J.jpRom('がっこう') !== 'gakkou' || J.jpRom('ぎゅうにゅう') !== 'gyuunyuu') bad.push('JP romaji rules are wrong: ' + [J.jpRom('わたしは けんた です。'), J.jpRom('きゃ'), J.jpRom('がっこう'), J.jpRom('ぎゅうにゅう')].join(' | '));
   // katakana (11 October): romaji with the long line and a small letter; twins are never offered side by side; a station's listening pool has no marks on their own
-  if (J.jpRom('ニュージーランド') !== 'nyuujiirando' || J.jpRom('ケーキ') !== 'keeki' || J.jpRom('アリア') !== 'aria' || J.jpKata('ありあ') !== 'アリア') bad.push('JP katakana romaji is wrong: ' + [J.jpRom('ニュージーランド'), J.jpRom('ケーキ'), J.jpKata('ありあ')].join(' | '));
+  if (J.jpRom('ニュージーランド') !== 'nyuujiirando' || J.jpRom('ケーキ') !== 'keeki' || J.jpRom('パリ') !== 'pari' || J.jpKata('ぱり') !== 'パリ') bad.push('JP katakana romaji is wrong: ' + [J.jpRom('ニュージーランド'), J.jpRom('ケーキ'), J.jpKata('ぱり')].join(' | '));
   if (!J.jpAlike('あ', 'ア') || J.jpAlike('ア', 'イ')) bad.push('JP katakana twins must count as alike');
   if (J.jpSlowParts('ジュース').map(p => p.t).join('|') !== 'ジュー|ス') bad.push('JP slowly should hold a long sound: ' + J.jpSlowParts('ジュース').map(p => p.t).join('|'));
   J.JP_ST.forEach((st, i) => { if (st.kata) { if (J.jpListenPool(st).some(k => 'ーュャョッ'.includes(k))) bad.push('JP station ' + (i + 1) + ' asks a mark on its own');
@@ -235,7 +235,7 @@ for (const cid of CIDS) ctx.COUNTRIES[cid].missions.forEach(m => m.rounds.forEac
   J.JP_STOPS.forEach(s => { if (!flat[s.icon]) bad.push('JP stop picture missing: ' + s.icon); });
   /* KENTA'S TOWN: every line uses only letters met on the line; every prompt is 12 words or fewer; every picture exists; each step has a right answer; the role-play has five turns */
   { const T = ctx.TOWNW, pic = p => flat[p] || ['me', 'kenta'].includes(p) || (/^flag:/.test(p) && ctx.FLAGS[p.slice(5)]) || /^(age|yen|coin):\d+$/.test(p); let tl = 0;
-    const can = (x, where) => { tl++; const t = String(x).replace('{kname}', 'アリア').replace('{name}', 'ありあ').replace('＿', ''); if (!J.jpCan(t, ctx.JP_N)) bad.push('TOWN ' + where + ': a letter she has not met in ' + x); if (/undefined/.test(J.jpRom(t))) bad.push('TOWN ' + where + ': no sound for ' + x); };
+    const can = (x, where) => { tl++; const t = String(x).replace('{kname}', 'リコ').replace('{name}', 'りこ').replace('＿', ''); if (!J.jpCan(t, ctx.JP_N)) bad.push('TOWN ' + where + ': a letter she has not met in ' + x); if (/undefined/.test(J.jpRom(t))) bad.push('TOWN ' + where + ': no sound for ' + x); };
     const en = (x, where) => { if (!x || words(x) > 12) bad.push('TOWN ' + where + ' needs a line of 12 words or fewer: ' + x); if (/[\u3040-\u30ff]/.test(x) && where !== 'clue') bad.push('TOWN ' + where + ': kana in a line the English voice reads: ' + x); };   /* clues are spoken through townMix */
     T.TOWN.filter(p => !p.soon).forEach(P => { const w = 'place ' + P.id;
       if (!P.friend || !flat[P.friend.art] || !flat[P.icon] || !P.card || P.card.length !== 3 || !P.tip) bad.push('TOWN ' + w + ' needs a friend, a sign, a card of three and a tip');
@@ -254,32 +254,74 @@ for (const cid of CIDS) ctx.COUNTRIES[cid].missions.forEach(m => m.rounds.forEac
     if (T.TOWN.length !== 8) bad.push('TOWN should show eight places');
     console.log(`Kenta's Town: ${T.TOWN.filter(p => !p.soon).length} places built, ${tl} lines each readable from the letters met on the line.`); }
   /* CODE LAB (28 October): every puzzle can be done, within its block limit, in its best count; a limit really needs a loop; a buggy program really fails; the broken-down parts can each be done;
-     every prediction lands on the board away from the start; the shapes differ; prompts are 12 words or fewer; pictures and gifts exist */
-  { const C = ctx.CODEW; let np = 0; const ids = new Set();
+     every prediction lands on the board away from the start; the shapes differ; prompts are 12 words or fewer; pictures and gifts exist.
+     From station 5 (29 October): a puzzle with two boards really needs the new idea (a program written step by step for one board fails the other); its hints exist and are short;
+     the answer only uses blocks and questions the station offers; a counter question's choices differ; nothing loops for ever */
+  { const C = ctx.CODEW; let np = 0, nb = 0; const ids = new Set();
     const onBoard = (b, c) => c[0] >= 0 && c[1] >= 0 && c[0] < b.cols && c[1] < b.rows;
+    const FACE = { u: 0, r: 1, d: 2, l: 3 };
+    /* the program a child could write for one board without the new idea: its trip, step by step, adding 1 on each gem when the board counts */
+    const naive = b => { const route = C.cdRoute(b), p = C.cdLegProg(route, { at: b.start, f: FACE[b.face] }, route[route.length - 1]); if (b.count == null) return p;
+      const out = [], gems = new Set((b.gems || []).map(String)); let x = b.start[0], y = b.start[1], f = FACE[b.face];
+      p.forEach(n => { out.push(n); if (n.t === 'F') { x += [0, 1, 0, -1][f]; y += [-1, 0, 1, 0][f]; if (gems.has(x + ',' + y)) out.push({ t: 'C' }); } else f = (f + (n.t === 'cw' ? 1 : 3)) % 4; }); return out; };
     C.CD_ST.forEach((st, si) => { const w = 'CODE station ' + (si + 1);
       if (!flat[st.icon]) bad.push(w + ': picture missing ' + st.icon); if (st.soon) return;
       if (words(st.idea) > 12 || /[\u3040-\u30ff]/.test(st.ideaSay)) bad.push(w + ': the idea needs 12 words or fewer');
-      st.meet.forEach(m => { const r = C.cdSim(m.b, C.cdParse(m.prog)); if (m.fixed) { if ((m.bug && C.cdWin(m.b, r)) || (!m.bug && !C.cdWin(m.b, r)) || !C.cdWin(m.b, C.cdSim(m.b, C.cdParse(m.fixed)))) bad.push(w + ': the demo should fail, then work when fixed'); } else if (r.bump) bad.push(w + ': the demo bumps'); });
+      const envOf = d => d ? { defs: { M: C.cdParse(d) } } : null;
+      st.meet.forEach(m => { const bs = m.bs || [m.b], run = (b, p, d) => C.cdSim(b, C.cdParse(p), null, envOf(d));
+        if (m.fixed) { const fail = bs.some(b => !C.cdWin(b, run(b, m.prog, m.def))), ok = bs.every(b => C.cdWin(b, run(b, m.fixed, m.fdef || m.def)));
+          if ((m.bug && !fail) || (!m.bug && fail) || !ok) bad.push(w + ': the demo should fail, then work when fixed'); }
+        else if (bs.some(b => { const r = run(b, m.prog, m.def); return r.bump || r.stuck; })) bad.push(w + ': the demo bumps'); });
+      /* what the station lets her use */
+      const can = new Set(st.blocks.concat((st.sensors || ['wall']).map(c => '?' + c), (st.untils || st.sensors || []).map(c => '?' + c), st.counter ? ['Rc'] : [], st.fnum ? ['Fn'] : []));
       st.items.forEach(it => { np++; const x = w + ' ' + it.id; if (ids.has(it.id)) bad.push(x + ': id used twice'); ids.add(it.id);
         if (!it.text || words(it.text) > 12) bad.push(x + ': prompt needs 12 words or fewer');
-        const b = it.b; if (b) { [b.start].concat(b.gems || [], b.goal ? [b.goal] : [], b.crates || []).forEach(c => { if (!onBoard(b, c)) bad.push(x + ': off the board ' + c); });
-          if ((b.crates || []).some(c => c + '' === b.start + '')) bad.push(x + ': starts on a crate'); }
-        if (it.k === 'build' || it.k === 'fix') { const sol = C.cdParse(it.sol), r = C.cdSim(b, sol), n = C.cdCount(sol);
-          if (!C.cdWin(b, r)) bad.push(x + ': its own answer does not work: ' + it.sol);
+        const bs = it.bs || (it.b ? [it.b] : []), env = envOf(it.def), envS = envOf(it.sdef || it.def);
+        bs.forEach(b => { [b.start].concat(b.gems || [], b.goal ? [b.goal] : [], b.crates || [], b.blue || [], b.yellow || []).forEach(c => { if (!onBoard(b, c)) bad.push(x + ': off the board ' + c); });
+          if ((b.crates || []).some(c => c + '' === b.start + '')) bad.push(x + ': starts on a crate'); });
+        if (it.sol) { const u = C.cdUses((typeof it.sol === 'string' ? C.cdParse(it.sol) : Object.values(it.sol).flatMap(C.cdParse)).concat(it.sdef || it.def ? C.cdParse(it.sdef || it.def) : [])); [...u].forEach(k => { if (!can.has(k)) bad.push(x + ': the answer uses ' + k + ', which the station does not offer'); }); }
+        if (it.k === 'build' || it.k === 'fix') { const sol = C.cdParse(it.sol), n = C.cdCount(sol) + (it.sdef || it.def ? C.cdCount(C.cdParse(it.sdef || it.def)) : 0);
+          if (it.need && !C.cdUses(sol).has(it.need)) bad.push(x + ': the answer does not use ' + it.need);
+          if (it.code && C.cdText(C.cdParse(C.cdText(sol))) !== C.cdText(sol)) bad.push(x + ': the code answer does not read back the same');
+          if ((it.def || it.code) && it.k === 'build') ['hint', 'hint2'].forEach(k => { const hh = it[k]; if (!hh || hh.length !== 2 || words(hh[0]) > 12) bad.push(x + ': ' + k + ' needs a short line and a spoken line'); });
+          bs.forEach((b, k) => { if (!C.cdWin(b, C.cdSim(b, sol, null, envS))) bad.push(x + ': its own answer does not work on board ' + (k + 1) + ': ' + it.sol); });
           if (it.max && n > it.max) bad.push(x + ': answer over the block limit');
           if (it.best > n) bad.push(x + ': best is more than the answer');
-          const route = C.cdRoute(b), legs = C.cdCorners(route); let here = { at: b.start, f: { u: 0, r: 1, d: 2, l: 3 }[b.face] };
-          if (route.length < 2) bad.push(x + ': no route');
-          legs.forEach(li => { const to = route[li], p = C.cdLegProg(route, here, to), rr = C.cdSim(b, p, [here.at[0], here.at[1], here.f]); if (rr.bump || rr.x !== to[0] || rr.y !== to[1]) bad.push(x + ': a part of the trip cannot be done'); here = { at: to, f: rr.f }; });
-          const whole = C.cdLegProg(route, { at: b.start, f: { u: 0, r: 1, d: 2, l: 3 }[b.face] }, route[route.length - 1]);
-          if (!C.cdWin(b, C.cdSim(b, whole))) bad.push(x + ': the step-by-step route does not do the job');
-          if (it.max && C.cdCount(whole) <= it.max) bad.push(x + ': the limit does not need a loop'); }
-        if (it.k === 'fix' || it.k === 'bug') { const p = C.cdParse(it.prog); if (C.cdWin(b, C.cdSim(b, p))) bad.push(x + ': the buggy program works'); if (!(it.bug >= 0 && it.bug <= p.length)) bad.push(x + ': bug out of range'); }
-        if (it.k === 'predict') { const r = C.cdSim(b, C.cdParse(it.prog)); if (r.bump) bad.push(x + ': the robot bumps'); if (r.x === b.start[0] && r.y === b.start[1]) bad.push(x + ': it ends where it starts'); }
+          const simple = !it.bs && !it.def && [...C.cdUses(sol)].every(t => ['F', 'cw', 'acw', 'R'].includes(t)), b = bs[0];
+          if (simple) { const route = C.cdRoute(b), legs = C.cdCorners(route); let here = { at: b.start, f: FACE[b.face] };
+            if (route.length < 2) bad.push(x + ': no route');
+            legs.forEach(li => { const to = route[li], p = C.cdLegProg(route, here, to), rr = C.cdSim(b, p, [here.at[0], here.at[1], here.f]); if (rr.bump || rr.x !== to[0] || rr.y !== to[1]) bad.push(x + ': a part of the trip cannot be done'); here = { at: to, f: rr.f }; });
+            const whole = C.cdLegProg(route, { at: b.start, f: FACE[b.face] }, route[route.length - 1]);
+            if (!C.cdWin(b, C.cdSim(b, whole))) bad.push(x + ': the step-by-step route does not do the job');
+            if (it.max && C.cdCount(whole) <= it.max) bad.push(x + ': the limit does not need a loop'); }
+          if (it.bs) { nb++;
+            if (bs.length < 2) bad.push(x + ': two boards needed');
+            bs.forEach((b1, k) => { const p = naive(b1); if (b1.goal && !C.cdWin(b1, C.cdSim(b1, p))) bad.push(x + ': the step-by-step trip fails its own board ' + (k + 1));
+              if (bs.every(b2 => C.cdWin(b2, C.cdSim(b2, p)))) bad.push(x + ': a step-by-step program for board ' + (k + 1) + ' works on every board, so the new idea is not needed'); });
+            if (it.k === 'build') ['hint', 'hint2'].forEach(k => { const hh = it[k]; if (!hh || hh.length !== 2 || words(hh[0]) > 12 || /[\u3040-\u30ff]/.test(hh[1])) bad.push(x + ': ' + k + ' needs a short line and a spoken line'); }); }
+          const wr = C.cdParse(it.sol); wr.pop(); if (wr.length && bs.every(b => C.cdWin(b, C.cdSim(b, wr, null, null)))) bad.push(x + ': the tests\' wrong program works'); }
+        if (it.k === 'fix' || it.k === 'bug') { const p = C.cdParse(it.prog); if (bs.every(b => C.cdWin(b, C.cdSim(b, p, null, env)))) bad.push(x + ': the buggy program works'); if (!(it.bug >= 0 && it.bug <= C.cdFlat(p).length)) bad.push(x + ': bug out of range'); }
+        if (it.k === 'predict') { const r = it.btns ? C.cdSim(it.b, it.press.split(' ').flatMap(k => { if (!it.btns[k]) bad.push(x + ': a press with no button ' + k); return C.cdParse(it.btns[k] || ''); })) : C.cdSim(it.b, C.cdParse(it.prog), null, env); if (r.bump || r.stuck) bad.push(x + ': the robot bumps or never stops'); if (r.x === it.b.start[0] && r.y === it.b.start[1]) bad.push(x + ': it ends where it starts'); }
+        if (it.k === 'count') { const r = C.cdSim(it.b, C.cdParse(it.prog)); if (r.bump || r.stuck) bad.push(x + ': the robot bumps or never stops'); const all = [r.count].concat(it.opts || []);
+          if (new Set(all).size !== all.length || all.length < 3 || all.some(v => !(v >= 0))) bad.push(x + ': the counter choices must be 3 or more different numbers'); }
+        /* events (station 11): her answer works press by press; with the first button empty it fails; a starting program to fix really fails; only its own buttons are pressed */
+        if (it.k === 'events') { const pr = it.press.split(' '), run = o => C.cdSim(it.b, pr.flatMap(k => C.cdParse(o[k] || '')));
+          if (pr.some(k => !it.btns.includes(k)) || Object.keys(it.sol).some(k => !it.btns.includes(k))) bad.push(x + ': a press or answer for a button that is not there');
+          if (!C.cdWin(it.b, run(it.sol))) bad.push(x + ': its own answer does not work');
+          const w = Object.assign({}, it.sol); w[it.btns[0]] = ''; if (C.cdWin(it.b, run(w))) bad.push(x + ': the tests\' wrong answer works');
+          if (it.start && C.cdWin(it.b, run(it.start))) bad.push(x + ': the program to fix already works');
+          ['hint', 'hint2'].forEach(k => { const hh = it[k]; if (!hh || hh.length !== 2 || words(hh[0]) > 12) bad.push(x + ': ' + k + ' needs a short line and a spoken line'); }); }
+        /* driving: the buttons are one block each, and a way through exists using them */
+        if (it.k === 'drive') { const blk = {}; Object.keys(it.btns).forEach(k => { blk[it.btns[k]] = k; }); const b = it.b, route = C.cdRoute(b), p = C.cdLegProg(route, { at: b.start, f: FACE[b.face] }, route[route.length - 1]);
+          if (p.some(n => !blk[n.t])) bad.push(x + ': the way through needs a button that is not there'); if (!C.cdWin(b, C.cdSim(b, p))) bad.push(x + ': no way through'); }
+        /* code (station 12): the three programs read as three different codes, each line from a block */
+        if (it.k === 'code') { const cs = [it.prog].concat(it.opts).map(q => C.cdPy(C.cdParse(q)).map(l => l.t).join('\n')); if (new Set(cs).size !== cs.length || cs.length < 3) bad.push(x + ': two codes read the same'); }
+        if (it.k === 'fixcode') { const p = C.cdParse(it.prog), fl = C.cdFlat(p), ln = C.cdPy(p); if (C.cdWin(it.b, C.cdSim(it.b, p))) bad.push(x + ': the buggy code works');
+          if (!fl[it.bug] || !ln.some(l => l.nd === fl[it.bug])) bad.push(x + ': the bug has no line'); }
         if (it.k === 'shape') { const sv = [it.prog].concat(it.opts).map(q => C.cdShapeSvg(C.cdParse(q))); if (new Set(sv).size !== sv.length) bad.push(x + ': two shapes look the same'); } }); });
     if (C.CD_GIFTS.length !== C.CD_BUILT) bad.push('CODE needs one gift for each built station'); C.CD_GIFTS.forEach(g => { if (!flat[g.art]) bad.push('CODE gift picture missing: ' + g.art); });
-    console.log(`Code Lab: ${C.CD_ST.length} stations planned, ${C.CD_BUILT} built, ${np} puzzles each checked: the answer works within its limit, every part of a broken-down trip can be done, a limit needs a loop.`); }
+    Object.values(C.CD_SENSE).forEach(v => { if (!flat[v[0]]) bad.push('CODE question picture missing: ' + v[0]); });
+    console.log(`Code Lab: ${C.CD_ST.length} stations planned, ${C.CD_BUILT} built, ${np} puzzles each checked: the answer works within its limit (on every board), every part of a broken-down trip can be done, a limit needs a loop; ${nb} two-board puzzles really need the new idea.`); }
   console.log(`Japanese: ${ctx.JP_N} stations, ${jw} words each readable from the letters met so far, ${jt} conversations, every letter's strokes, the race at ${ctx.JP_PACE} seconds a step.`); }
 texts.forEach(t => { if (words(t) > 12) bad.push('CONTENT-LONG(' + words(t) + ') ' + t); });
 const uniq = [...new Set(bad)];

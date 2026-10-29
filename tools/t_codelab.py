@@ -1,4 +1,4 @@
-# The Code Lab (0763-code.js, 28 October): its four built stations played through at one screen size, with wrong programs and wrong picks on purpose.
+# The Code Lab (0763-code.js, 28 October; all built stations from 29 October): every built station played through at one screen size, with wrong programs and wrong picks on purpose.
 # Checks: the map's Code Lab button opens it (real click); every chip on the board can be tapped where it is drawn; a station still to come and a locked one stay shut;
 # a program built with real taps (three forwards; then a repeat with a forward inside, 5 picked from its number picker) makes the robot do the job; every puzzle finishes and the
 # stations are passed; nothing is off the screen or too small to tap; the robot stays on its board; the gifts arrive and the shop's "Code Lab gifts" shelf shows them;
@@ -25,6 +25,7 @@ async def main():
     w, h = SIZES[size]; bad = []
     async with async_playwright() as p:
         b, page, logs = await boot(p, w, h)
+        BUILT = await page.evaluate('()=>__ww.code.CD_BUILT')
         # the map's top bar, now with the Code Lab button, with a four-digit star count: every button on the screen, none overlapping
         await page.evaluate('()=>{__ww.S().stars=9999; __ww.go("map")}'); await page.wait_for_timeout(500)
         hb = await page.evaluate('''()=>{const bs=[...document.querySelectorAll('.hud button, .hud .pill')].filter(b=>b.getBoundingClientRect().width); const rs=bs.map(b=>b.getBoundingClientRect()); const out=[];
@@ -50,14 +51,14 @@ async def main():
             if sig == last: idle += 1; continue
             idle = 0; last = sig; n += 1
             await page.wait_for_timeout(240)
-            for i in await page.evaluate(OFF): issues[i] = issues.get(i, 0) + 1
+            for i in await page.evaluate(OFF): i = i + ' @' + (st.get('cd') or st.get('item') or st.get('type') or '?'); issues[i] = issues.get(i, 0) + 1
             if n < 300: await page.screenshot(path=f'shots/cl_{size}_{n:03d}.png')
             t = st['type']
             if t is None: continue
             if t == 'labmenu':
                 stp = await page.evaluate('()=>(__ww.S().code||{}).st||0')
-                if stp >= 4: break
-                await page.evaluate('()=>__ww.cur.pick("next")'); last = None; continue
+                if stp >= BUILT: break
+                await page.evaluate('()=>__ww.cur && __ww.cur.pick && __ww.cur.pick("next")'); last = None; continue
             if t == 'act' and st['cd']:
                 kinds.add('build')
                 # real taps: three forwards for 1a; a repeat with forward inside, counted up to 5, for 3a
@@ -74,24 +75,31 @@ async def main():
                     txt = await page.evaluate('()=>[document.querySelector(".cd-n").textContent, document.querySelectorAll(".cd-body .cd-b").length]')
                     if txt != ['×5', 1]: bad.append('the repeat block did not build as tapped: ' + str(txt))
                     await page.click('.cd-go'); last = None; continue
-                if miss < 25 and n % 3 == 0 and st['phase'] in ('full', 'free'): miss += 1; await page.evaluate('()=>__ww.cur.miss()'); last = None; continue
+                if st['cd'] == '5a' and '5a' not in real and st['phase'] == 'full':
+                    real.add('5a')   # an if inside a repeat, with real taps: repeat, forward, if (asks about blue), turn clockwise inside the if; the repeat's number 6 from its picker
+                    for t in ('R', 'F', 'I', 'cw'): await page.click(f'.cd-pb[data-t="{t}"]'); await page.wait_for_timeout(120)
+                    await page.click('.cd-k-R > .cd-n'); await page.wait_for_timeout(150); await page.click('.cd-pick .cd-pk[data-n="6"]'); await page.wait_for_timeout(120)
+                    got = await page.evaluate('()=>__ww.cur.prog()')
+                    if got != 'R6(F I(blue: cw))': bad.append('the if block did not build as tapped: ' + got)
+                    await page.click('.cd-go'); last = None; continue
+                if miss < 70 and n % 3 == 0 and st['phase'] in ('full', 'free'): miss += 1; await page.evaluate('()=>__ww.cur.miss()'); last = None; continue
                 await page.evaluate('()=>__ww.cur.auto()'); last = None; continue
             if t == 'choice':
                 kinds.add(st['item'][:1] + ':choice')
-                wrong = miss < 25 and n % 3 == 0 and st['n'] > 1
+                wrong = miss < 70 and n % 3 == 0 and st['n'] > 1
                 if wrong: miss += 1
                 await page.evaluate('(b)=>__ww.cur.give(b? (__ww.cur.answer+1)%__ww.cur.n : __ww.cur.answer)', wrong); last = None; continue
             if t == 'btn': await page.evaluate('()=>__ww.cur.auto()'); last = None; continue
         C = await page.evaluate('()=>__ww.S().code')
-        if not C or C.get('st') != 4: bad.append('stations not passed: ' + json.dumps(C))
-        for k in ('1a', '3a'):
+        if not C or C.get('st') != BUILT: bad.append('stations not passed: ' + json.dumps(C))
+        for k in ('1a', '3a', '5a'):
             if k not in real: bad.append('real taps not tried on ' + k)
-        own = await page.evaluate('()=>["cdg-robot","cdg-lady-beetle","cdg-joystick","cdg-desktop-computer"].map(k=>!!(__ww.S().owned||{})[k])')
+        own = await page.evaluate('()=>__ww.code.CD_GIFTS.map(g=>!!(__ww.S().owned||{})[g.id])')
         if not all(own): bad.append('gifts not given: ' + str(own))
-        # back on the home: four chips done, badges shown
+        # back on the home: every built chip done, badges shown
         await page.evaluate('()=>__ww.go("code")'); await page.wait_for_timeout(500)
         m = await page.evaluate('()=>({done:document.querySelectorAll(".cd-chip.done").length, soon:document.querySelectorAll(".cd-chip.soon").length, badges:document.querySelectorAll(".cd-bar .cd-badge").length})')
-        if m != {'done': 4, 'soon': 8, 'badges': 4}: bad.append('home after four stations: ' + json.dumps(m))
+        if m != {'done': BUILT, 'soon': 12 - BUILT, 'badges': BUILT}: bad.append('home after every station: ' + json.dumps(m))
         await page.screenshot(path=f'shots/cl_{size}_999home.png')
         # the shop shelf, the passport button, the grown-ups note
         shelf = await page.evaluate('''()=>{__ww.go("room"); return new Promise(r=>setTimeout(()=>{const b=[...document.querySelectorAll('button')].find(x=>/Shop/.test(x.textContent)); if(b) b.click(); setTimeout(()=>{r([...document.querySelectorAll('*')].some(e=>e.children.length===0&&/Code Lab gifts/.test(e.textContent)))},500)},500))}''')
@@ -110,7 +118,7 @@ async def main():
             for d in '1234': await page.click(f'.pinpad .np button:text-is("{d}")')
             await page.wait_for_timeout(400)
         note = await page.evaluate('()=>(document.querySelector(".cd-note")||{}).textContent||""')
-        if '4 of 12' not in note: bad.append('grown-ups note: ' + note[:80])
+        if f'{BUILT} of 12' not in note: bad.append('grown-ups note: ' + note[:80])
         print(size, 'states', n, 'wrong tries', miss, 'kinds', sorted(kinds))
         for k, v in issues.items(): print('  ', v, k)
         for x in bad: print('  WRONG', x)

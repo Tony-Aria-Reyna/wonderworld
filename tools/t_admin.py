@@ -35,7 +35,7 @@ async def main():
         check(s3['missions'].get('egypt.m1',{}).get('done') and s3['missions'].get('japan.m1',{}).get('done') and 'egypt' in s3['videos'], 'Egypt and Japan are untouched')
         check('turns' not in s3['skills'] and 'earth' not in s3['skills'] and 'tereo' not in s3['skills'] and s3['weave'] == 0, 'the skills only New Zealand teaches, and the weaving, went back to the start')
         check(s3['skills']['addsub']['lv'] == 5 and s3['skills']['arrays']['lv'] == 6 and s3['skills']['scithink']['clean'] == 7 and s3['pixel'] == 2 and s3['stars'] == 120, 'shared skills, Japan pictures and stars are kept')
-        aria = await page.evaluate('()=>localStorage.getItem("wonderworld2_v1")')
+        kid = await page.evaluate('()=>localStorage.getItem("wonderworld2_v1")')
         # 3 the test player
         await page.click('button:text("Switch to the test player")'); await page.wait_for_timeout(300); t = await st()
         check(await page.evaluate('()=>__ww.who()') == 'test' and await page.evaluate('()=>document.body.classList.contains("testing")'), 'now the test player, and every screen is labelled')
@@ -56,12 +56,12 @@ async def main():
             elif stt['type']: await page.evaluate('()=>__ww.cur.auto()')
         t2 = await st(); check(t2['missions'].get('japan.m4',{}).get('done') is True, 'the test player finished Fold and code without doing missions 1 to 3')
         check(cheers == {'Sugoi!'}, f'in Japan the only own-language cheer is Sugoi ({sorted(cheers)})')
-        check(await page.evaluate('()=>localStorage.getItem("wonderworld2_v1")') == aria, "the player's saved progress did not change by one character while the test player played")
+        check(await page.evaluate('()=>localStorage.getItem("wonderworld2_v1")') == kid, "the player's saved progress did not change by one character while the test player played")
         await page.reload(); await page.wait_for_timeout(300)
         check(await page.evaluate('()=>__ww.who()') == 'test' and await page.evaluate('()=>document.body.classList.contains("testing")'), 'after closing and reopening, it is still the test player, still labelled')
         await pin(page); await page.click('button:text("Switch back to")'); await page.wait_for_timeout(300); s4 = await st()
         check(await page.evaluate('()=>__ww.who()') == '' and not await page.evaluate('()=>document.body.classList.contains("testing")'), 'switched back to the player; the label is gone')
-        check(json.dumps(s4, sort_keys=True) == json.dumps(json.loads(aria), sort_keys=True), "the player's progress is exactly as it was")
+        check(json.dumps(s4, sort_keys=True) == json.dumps(json.loads(kid), sort_keys=True), "the player's progress is exactly as it was")
         await page.evaluate('()=>__ww.go("country","japan")'); await page.wait_for_timeout(300)
         check(await page.locator('.node.locked:not(.video)').count() > 0, 'for the player, later missions are still locked until she does the earlier ones')
         # 4 New Zealand keeps Ka pai

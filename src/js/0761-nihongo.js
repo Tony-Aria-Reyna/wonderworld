@@ -24,7 +24,7 @@
 const JP_R = {};
 ('あa いi うu えe おo かka きki くku けke こko さsa しshi すsu せse そso たta ちchi つtsu てte とto なna にni ぬnu ねne のno はha ひhi ふfu へhe ほho まma みmi むmu めme もmo やya ゆyu よyo ' +
  'らra りri るru れre ろro わwa をo んn がga ぎgi ぐgu げge ごgo ざza じji ずzu ぜze ぞzo だda ぢji づzu でde どdo ばba びbi ぶbu べbe ぼbo ぱpa ぴpi ぷpu ぺpe ぽpo').split(' ').forEach(s => { JP_R[s[0]] = s.slice(1); });
-/* katakana (Tony, 11 October, approving "katakana first: her name アリア, ニュージーランド, パン"): every hiragana has a katakana twin with the same sound, 0x60 further on in Unicode */
+/* katakana (Tony, 11 October, approving "katakana first: the player's name, ニュージーランド, パン"): every hiragana has a katakana twin with the same sound, 0x60 further on in Unicode */
 const jpKata = t => String(t).replace(/[\u3041-\u3096]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
 const jpHira = t => String(t).replace(/[\u30a1-\u30f6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
 const jpIsKata = t => /[\u30a1-\u30fc]/.test(String(t));
@@ -56,9 +56,9 @@ const jpSay = (t, o) => Speech.say([JPV(t)], o);
 const jpEl = (t, cls) => h('span', { class: 'jp' + (cls ? ' ' + cls : '') + ([...String(t)].length > 4 ? ' long' : '') + ([...String(t).replace(/\s/g, '')].length > 6 ? ' vlong' : ''), lang: 'ja' }, t);   /* vlong: ニュージーランド, eight letters, is drawn smaller so it fits its card */
 /* counting on, as children in Japan chant it: し for 4 and しち for 7 (Tony, 11 October: "if we are counting on, this should be 'Shi'"). よん and なな are the other ways to say them */
 const JP_NUM = ['', 'いち', 'に', 'さん', 'し', 'ご', 'ろく', 'しち', 'はち', 'きゅう', 'じゅう'];
-/* her name in hiragana (the player: ありあ), when every sound in it has a letter. Otherwise her name as it is */
+/* her name in hiragana (for example けんた), when every sound in it has a letter. Otherwise her name as it is */
 const jpName = () => { const n = S.name || 'Explorer'; return (n.length >= 2 && n.length <= 8 && kanaName(n)) || n; };
-const jpFill = t => String(t).replace('{name}', jpName()).replace('{kname}', jpKata(jpName()));   /* {kname}: her name in katakana, as a name from another country is written (アリア) */
+const jpFill = t => String(t).replace('{name}', jpName()).replace('{kname}', jpKata(jpName()));   /* {kname}: her name in katakana, as a name from another country is written (ケンタ) */
 
 /* ---- the twelve stations. kana: the new letters. anch: each new letter's picture word, as on a Japanese child's あいうえお chart (the letter is in it; the word may use letters still to come).
    words: words to read, using only letters met so far. talk: the conversation. rule: how this row works, said when she meets it ---- */
@@ -129,7 +129,7 @@ const JP_ST = [
     talk: [{ scene: 'park', ask: 'Kenta asks how you are.', dog: 'げんき？', dogEn: 'How are you?', me: 'げんき です！', meEn: 'I am well!', no: ['おやすみ。', 'いただきます！'], clue: 'He wants to know how you feel. Tell him.' },
       { scene: 'sunset', ask: 'Time to go home. Kenta says…', dog: 'またね！', dogEn: 'See you!', me: 'さようなら！', meEn: 'Goodbye!', no: ['おはよう！', 'いただきます！'], clue: 'You are going home. Say goodbye.' }] },
   /* ---- three katakana stations (proposed 11 October, approved: "Commence with items 1 and 2"). She knows every sound already, so each letter is met beside its hiragana twin.
-     The letters are chosen for the words she needs first: her name アリア, ニュージーランド, パン, then everyday words. Words written in katakana are words from other languages.
+     The letters are chosen for the words she needs first: the player's name, ニュージーランド, パン, then everyday words. Words written in katakana are words from other languages.
      Sources: the katakana are the standard Japanese syllabary (gojūon, katakana form); the words are everyday loanwords in a Japanese first-grade reader. Strokes: KanjiVG, as for hiragana ---- */
   { head: 'ア', kana: 'アイスリパペン', name: 'Katakana: first words', kata: true,
     rule: { text: 'Katakana: the same sounds, a sharper shape.', intro: 'Every hiragana has a twin in katakana. The same sound, a sharper shape. Katakana writes words from other countries, like your name. Listen to each pair.', outro: ['Now you can read words from other countries, like', JPV('アイス'), ', ice cream!'] },
@@ -284,7 +284,7 @@ function jpAsk(ui, o) {
     ui.prompt(o.text, o.say); hook();
   });
 }
-/* a word's picture: an icon, or her own explorer ('me', for アリア), Kenta ('kenta'), a flag ('flag:nz'), a birthday cake with an age on it ('age:7'), a price tag ('yen:50') or a yen coin ('coin:50') */
+/* a word's picture: an icon, or her own explorer ('me', for the player's own name), Kenta ('kenta'), a flag ('flag:nz'), a birthday cake with an age on it ('age:7'), a price tag ('yen:50') or a yen coin ('coin:50') */
 function jpArt(a) {
   a = String(a);
   if (a === 'me') return h('span', { class: 'ic jp-mepic' }, meEl(S.me || newMe(PRESETS[0])));
