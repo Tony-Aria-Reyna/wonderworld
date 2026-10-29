@@ -215,6 +215,15 @@ Tony, 11 October: "How do we get to the next step to ensure the player can start
 - **For the family** (grown-ups page, "Japanese with the family"): this week's talk card, three phrases from the place she is on, with romaji and English for the grown-up, to copy into a message or print (`townCard`, `townCardText`); and "A family voice for Japanese": the recording studio for every line of each built place, the line's conversations and its words (`townLines`). A recording replaces the computer voice wherever that line is said (`Speech.clip`; keys ignore Japanese punctuation). The test player has "Open every Japanese station".
 - **Checks**: `t_town.py` (all six steps of every built place with wrong picks, the map with real clicks, the grown-ups page), `t_jptalk.py` (the town's bubbles too), `test_skills.mjs`.
 
+## Voices: hearing the real languages (`0607-voices.js`)
+
+29 October, Tony, after the language words were read in English on his Android ("This needs to be easier"). The phone had every voice (the grown-ups page found Japanese, Russian and the rest, 92 voices, Google's engine), yet Chrome spoke them with the phone's English voice.
+- **How a language is asked for** (`Speech` in `01-core.js`): always in the standard form (`ja-JP`, never the `ja_JP` some phones report, `Speech.bcp`). Way 1, "by language", gives only the language and lets the phone choose its voice: Android starts on it, because Chrome on Android follows the language. Way 2, "by voice", also names the voice: laptops start on it. The choice is kept on the device (`wonderworld2_voiceway`).
+- **The voices screen** (`voiceHelp()`): every language with a tick or a cross, the voice and its language code, a Test button each; the steps for this kind of device (Android, Samsung Internet, iPhone, Edge, other browsers) with an Open speech settings button on Android; the Way 1 / Way 2 switch; Check again. Opened from the grown-ups page (Check the voices) and from the note below.
+- **The note**: the first time a lesson needs a language the device has no voice for, a small note says so, with Fix it. Once per language per visit. Te reo Māori never shows it (it is always played from recordings).
+- **Coming back**: the game looks for voices again whenever it comes back to the front (from the phone's settings), and the open voices screen updates itself.
+- **Checks**: `t_voices.py <size>` with a pretend voice list on a pretend Android phone: the note, the screen, Way 1 and Way 2 (what reaches the speech engine), a voice gained while away, the grown-ups button. The language tests (`t_ja.py`, `t_pt.py` and the rest) check the laptop way.
+
 ## Code Lab: programming (`0763-code.js`)
 
 Approved by Tony on 28 October ("Approve the plan of attack"): programming runs through every subject at good intermediate schools, and the countries' coding puzzles stop at moves and repeats.

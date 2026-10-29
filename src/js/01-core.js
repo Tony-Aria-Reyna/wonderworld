@@ -124,7 +124,13 @@ const Speech = (() => {
   const has = 'speechSynthesis' in window;
   const load = () => { try { voices = speechSynthesis.getVoices() || []; } catch (e) { voices = []; } };
   if (has) { load(); try { speechSynthesis.addEventListener('voiceschanged', load); } catch (e) { speechSynthesis.onvoiceschanged = load; } }
+  /* a phone can gain voices while the game is in the background (a grown-up downloads Japanese in the phone's settings): look again whenever the game comes back */
+  if (has) { const again = () => { if (!document.hidden) { load(); if (api && api.onBack) api.onBack(); } }; document.addEventListener('visibilitychange', again); window.addEventListener('pageshow', again); window.addEventListener('focus', again); }
   const norm = v => (v.lang || '').toLowerCase().replace('_', '-');
+  const bcp = l => { const p = String(l || '').replace(/_/g, '-').split('-'); return p[0].toLowerCase() + (p[1] ? '-' + p[1].toUpperCase() : ''); };
+  const WAYKEY = 'wonderworld2_voiceway';
+  const voiceWay = () => { let w = null; try { w = localStorage.getItem(WAYKEY); } catch (e) {} return w === 'lang' || w === 'voice' ? w : /Android/i.test(navigator.userAgent || '') ? 'lang' : 'voice'; };
+  const setVoiceWay = w => { try { localStorage.setItem(WAYKEY, w); } catch (e) {} };
   function english() {
     const score = v => {
       const l = norm(v), n = v.name; let s = 0;
@@ -172,10 +178,15 @@ const Speech = (() => {
           if (voice) usedNative = true;
           else if (REAL_ONLY[o.lang] && !o.inline) { fin(false); return; }                               // no real voice: stay silent, the word is on the screen
           else t = o.inline ? word(text, o.fallback || text, o.lang) : (o.fallback || text);
+          if (!voice && !REAL_ONLY[o.lang] && api.onMissing) api.onMissing(o.lang);                      // no voice for this language on this device: say so on screen, with a way to fix it
         }
         if (!voice) voice = english();
         const u = new SpeechSynthesisUtterance(t);
-        if (voice) { u.voice = voice; u.lang = voice.lang; }
+        /* How the language is asked for (29 October: on Tony's Android, Chrome found the Japanese voice yet spoke Japanese words with the phone's English voice).
+           The language is always given in the standard form (ja-JP, not ja_JP, which some phones report). Way "lang" gives only the language and lets the phone pick
+           its own voice for it, which Chrome on Android follows; way "voice" also names the voice, which laptops follow. Android starts on "lang";
+           the voices screen (grown-ups page) can switch it on this device if a language still sounds English */
+        if (voice) { u.lang = bcp(voice.lang); if (voiceWay() === 'voice') u.voice = voice; }
         u.rate = o.rate || (slow ? .8 : .95); u.pitch = o.pitch || (usedNative ? 1 : 1.08);   /* a pitch can be asked for: in a Japanese conversation her explorer speaks a little higher than Kotarō */
         u.onend = () => fin(usedNative); u.onerror = () => fin(false);
         speechSynthesis.speak(u);
@@ -199,8 +210,9 @@ const Speech = (() => {
     }
     return nativeUsed;
   }
-  return { say, english, native, word, can, clip, setClip, playClip, key: ckey, clips: () => VOX, realOnly: code => !!REAL_ONLY[code], list: () => voices,
+  var api = { say, english, native, word, can, clip, setClip, playClip, key: ckey, clips: () => VOX, realOnly: code => !!REAL_ONLY[code], list: () => voices, reload: load, way: voiceWay, setWay: setVoiceWay, bcp, onMissing: null, onBack: null,
     stop() { gen++; try { speechSynthesis.cancel(); } catch (e) {} if (playing) { try { playing.pause(); } catch (e) {} playing = null; } } };
+  return api;
 })();
 
 /* ---------- the guide: Kiki the kiwi ---------- */

@@ -395,7 +395,7 @@ SCREENS.parent = () => {
       h('p', { class: 'note' }, '"Clear" forgets one skill: its level and counts go back to the start, and the game finds the right level again. Levels 1 to 8 are pitched roughly at New Zealand Curriculum Years 1 to 8. A level rises after right-first-time answers and steps down when a question needed re-teaching twice.'),
       ...weaveNote(), ...raceNote(), ...spineNote(),
       ...players.reset,
-      h('h3', null, 'Voices on this device'),
+      h('h3', null, 'Voices on this device'), h('button', { class: 'btn go vh-check', 'data-k': 'voices', onclick: () => voiceHelp() }, ic('speaking-head'), 'Check the voices'),
       h('p', { class: 'note' }, 'Narration: ' + (en ? en.name : 'no English voice found') + '. Arabic: ' + (arv ? arv.name + ' (native speaker voice)' : 'no Arabic voice found, so Arabic words are sounded out by the English voice. On a Windows laptop, opening this file in Microsoft Edge gives natural voices, including Arabic, when online. On Android, add Arabic in Settings, Text-to-speech.') +
         (COUNTRIES.japan ? ' Japanese: ' + (jav ? jav.name + ' (native speaker voice).' : 'no Japanese voice found, so Japanese words are sounded out by the English voice. Microsoft Edge has a Japanese voice when online. On Android, add Japanese in Settings, Text-to-speech.') : '') +
         (COUNTRIES.russia ? ' Russian: ' + (ruv ? ruv.name + ' (native speaker voice).' : 'no Russian voice found, so Russian words are sounded out by the English voice. Microsoft Edge has a Russian voice when online. On Android, add Russian in Settings, Text-to-speech.') : '') +
